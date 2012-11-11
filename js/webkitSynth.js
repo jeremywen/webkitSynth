@@ -35,7 +35,7 @@ var $filterg = $("#filterg");
 var $sequencerOff = $("#sequencerOff");
 var $sequencerOn = $("#sequencerOn");
 var $rndSeq = $("#rndSeq");
-var keepRunning = false;
+var runSeq = false;
 var prevOsc;
 var seqPos=1;
 var seqSpeedInterval = 200;
@@ -284,7 +284,7 @@ function triggerOnce(){
 }
 
 function runSequencers(){
-  if(!keepRunning){console.log("stop");return;}
+  if(!runSeq){console.log("stop");return;}
   triggerOnce();
 
   var pSeqVal = (parseInt($("#p"+seqPos).attr("value"),10));
@@ -299,14 +299,14 @@ function runSequencers(){
 $sequencerOn.click(function(){
   $(this).parent().addClass("active");
   $sequencerOff.parent().removeClass("active");
-  keepRunning = true;
+  runSeq = true;
   runSequencers();
 });
 
 $sequencerOff.click(function(){
   $sequencerOn.parent().removeClass("active");
   $(this).parent().addClass("active");
-  keepRunning = false;
+  runSeq = false;
   mainOsc.noteOff(0);    
   mainOsc = context.createOscillator();
   setOscType($wave.val());

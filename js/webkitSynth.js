@@ -49,10 +49,10 @@ var seqSpeedInterval = 200;
 var context = new webkitAudioContext();
 var mainOsc = context.createOscillator();
 var mainFilter = context.createBiquadFilter();
-mainOsc.connect(mainFilter);
+// mainOsc.connect(mainFilter);
 var gainNode = context.createGainNode();
-mainFilter.connect(gainNode);
-gainNode.connect(context.destination);
+// mainFilter.connect(gainNode);
+// gainNode.connect(context.destination);
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,16 +184,21 @@ setFilterG(10); $filterg.trigger("change");
 function setGain(v) { 
   $gain.val(v); 
   gainNode.gain.value = v/100; 
-  console.log(v);   
+  console.log("gainNode.gain.value="+gainNode.gain.value);   
 }
-$gain.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : setGain });
+$gain.knob({ bgColor:"white", min:0, max:40, angleOffset:-140, angleArc:280, "change" : setGain });
 setGain(20); $gain.trigger("change");
 
 
 $ampattack.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
+$ampattack.val(1).trigger("change");
+
 $ampdecay.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
 $ampdecay.val(5).trigger("change");
+
 $filterattack.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
+$filterattack.val(1).trigger("change");
+
 $filterdecay.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
 $filterdecay.val(5).trigger("change");
 
@@ -270,12 +275,12 @@ function triggerOnce(){
   gainNodeTrig.connect(context.destination);
 
   var timeAtAttack = currTime + ($ampattack.val()/100);
-  gainNodeTrig.gain.linearRampToValueAtTime(gainNode.gain.value, timeAtAttack);
+  gainNodeTrig.gain.linearRampToValueAtTime(parseInt($gain.val(),10)/100, timeAtAttack);
   gainNodeTrig.gain.linearRampToValueAtTime(0, timeAtAttack + ($ampdecay.val()/100));
   
   timeAtAttack = currTime + ($filterattack.val()/100);
-  filterTrig.gain.linearRampToValueAtTime(mainFilter.frequency.value, timeAtAttack);
-  filterTrig.gain.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
+  filterTrig.frequency.linearRampToValueAtTime(parseInt($filterf.val(),10), timeAtAttack);
+  filterTrig.frequency.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
 
   oscillatorTrig.noteOn(0);   
 }

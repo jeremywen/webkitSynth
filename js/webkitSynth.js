@@ -37,6 +37,7 @@ $(function () {
   var $oscOff = $("#oscOff");
   var $oscTrigger = $("#oscTrigger");
   var $sequencerOn = $("#sequencerOn");
+  var $rndSeq = $("#rndSeq");
   var runRepeat = false;
   var prevOsc;
   var seqPos=1;
@@ -92,11 +93,17 @@ $(function () {
     max:8000,
     "change" : function(){}
   });
-  $freqBars.find("input").each(function (){
-    $(this).val(Math.floor(Math.random()*16000)-8000);
-  }).trigger("change");
 
 
+  function randomizeSequencers(){
+    $pitchBars.find("input").each(function (){
+      $(this).val(Math.floor(Math.random()*128)-64);
+    }).trigger("change");
+
+    $freqBars.find("input").each(function (){
+      $(this).val(Math.floor(Math.random()*16000)-8000);
+    }).trigger("change");
+  }
   ///////////////////////////////////////////////////////////////////////////////////////////////
   //knobs
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -309,6 +316,8 @@ $(function () {
     mainOsc.connect(mainFilter);
   });
 
+  randomizeSequencers();
+  $rndSeq.click(randomizeSequencers)
   $sequencerOn.click();
 
 });//end jquery ready

@@ -293,20 +293,16 @@ function triggerRepeat(){
   setTimeout(triggerRepeat,seqSpeedInterval);
 }
 
-$oscTrigger.click(function(){
-  triggerOnce();
-});
-
 $sequencerOn.click(function(){
+  $(this).parent().addClass("active");
+  $oscOff.parent().removeClass("active");
   runRepeat = true;
   triggerRepeat();
 });
 
-$oscOn.click(function(){
-  mainOsc.noteOn(0);    
-});
-
 $oscOff.click(function(){
+  $sequencerOn.parent().removeClass("active");
+  $(this).parent().addClass("active");
   runRepeat = false;
   mainOsc.noteOff(0);    
   mainOsc = context.createOscillator();

@@ -32,12 +32,10 @@ var $filterf = $("#filterf");
 var $filterq = $("#filterq");
 var $filtert = $("#filtert");
 var $filterg = $("#filterg");
-var $oscOn = $("#oscOn");
-var $oscOff = $("#oscOff");
-var $oscTrigger = $("#oscTrigger");
+var $sequencerOff = $("#sequencerOff");
 var $sequencerOn = $("#sequencerOn");
 var $rndSeq = $("#rndSeq");
-var runRepeat = false;
+var keepRunning = false;
 var prevOsc;
 var seqPos=1;
 var seqSpeedInterval = 200;
@@ -285,8 +283,8 @@ function triggerOnce(){
   oscillatorTrig.noteOn(0);   
 }
 
-function triggerRepeat(){
-  if(!runRepeat)return;
+function runSequencers(){
+  if(!keepRunning){console.log("stop");return;}
   triggerOnce();
 
   var pSeqVal = (parseInt($("#p"+seqPos).attr("value"),10));
@@ -295,20 +293,20 @@ function triggerRepeat(){
   mainFilter.frequency.value = parseInt($filterf.val(),10) + fSeqVal;
   seqPos==8?seqPos=1:seqPos++;
 
-  setTimeout(triggerRepeat,seqSpeedInterval);
+  setTimeout(runSequencers,seqSpeedInterval);
 }
 
 $sequencerOn.click(function(){
   $(this).parent().addClass("active");
-  $oscOff.parent().removeClass("active");
-  runRepeat = true;
-  triggerRepeat();
+  $sequencerOff.parent().removeClass("active");
+  keepRunning = true;
+  runSequencers();
 });
 
-$oscOff.click(function(){
+$sequencerOff.click(function(){
   $sequencerOn.parent().removeClass("active");
   $(this).parent().addClass("active");
-  runRepeat = false;
+  keepRunning = false;
   mainOsc.noteOff(0);    
   mainOsc = context.createOscillator();
   setOscType($wave.val());
@@ -319,50 +317,3 @@ $oscOff.click(function(){
 randomizeSequencers();
 $rndSeq.click(randomizeSequencers)
 $sequencerOn.click();
-
-
-
-/*
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-  //files
-  ///////////////////////////////////////////////////////////////////////////////////////////////
-  var playAudioFile = function (buffer) {
-      var source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(context.destination);
-      source.noteOn(0); // Play sound immediately
-  };
-
-  var loadAudioFile = function (url) {
-    var request = new XMLHttpRequest();
-    request.open("get", url, true);
-    request.responseType = "arraybuffer";
-    request.onload = function () {
-        context.decodeAudioData(request.response,
-            function(incomingBuffer) {
-                playAudioFile(incomingBuffer); // Not declared yet
-             }
-        );
-    };
-    request.send();
-  };
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-//Snippet - Modulating AudioParams with other nodes
-///////////////////////////////////////////////////////////////////////////////////////////////
-var saw = context.createOscillator(),
-      sine = context.createOscillator(),
-      sineGain = context.createGainNode();
-
-//set up our oscillator types
-saw.type = saw.SAWTOOTH;
-sine.type = sine.SINE;
-
-//set the amplitude of the modulation
-sineGain.gain.value = 10;
-
-//connect the dots
-sine.connect(sineGain);
-sineGain.connect(saw.frequency);
-*/

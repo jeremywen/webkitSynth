@@ -58,7 +58,7 @@ var gainNode = context.createGainNode();
 ///////////////////////////////////////////////////////////////////////////////////////////////
 function midiToFreq(v){ return 440 * Math.pow(2,((v-69)/12)); }
 function freqToMidi(v){ return Math.round(69 + 12*Math.log(v/440)/Math.log(2)); }
-
+function constrain(amt,low,high) { return (amt < low) ? low : ((amt > high) ? high : amt); }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //sequence bars
@@ -74,9 +74,6 @@ $pitchBars.bars({
   max:64,
   "change" : function(){}
 });
-$pitchBars.find("input").each(function (){
-  $(this).val(Math.floor(Math.random()*128)-64);
-}).trigger("change");
 
 
 $freqBars.bars({
@@ -101,6 +98,8 @@ function randomizeSequencers(){
     $(this).val(Math.floor(Math.random()*16000)-8000);
   }).trigger("change");
 }
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //knobs
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +120,7 @@ setOscType(mainOsc.SAWTOOTH); $wave.trigger("change");
 
 
 function setOscPitch(v) { 
-  if(v>13000)return;
+  v = constrain(v,13000);
   $pitch.val(mainOsc.frequency.value = v); 
   var midiVal = freqToMidi(v);
   if($mpitch.val()!=midiVal){ 
@@ -129,11 +128,12 @@ function setOscPitch(v) {
   } 
   console.log("osc pitch = "+v); 
 }
-$pitch.knob({ bgColor:"white", min:0, max:13000, angleOffset:-140, angleArc:280, "change" : setOscPitch });
+$pitch.knob({ bgColor:"white", min:1, max:13000, angleOffset:-140, angleArc:280, "change" : setOscPitch });
 setOscPitch(500); $pitch.trigger("change");
 
 
 function setMPitch(v) { 
+  v = constrain(v,1,127);
   $mpitch.val(v); 
   mainOsc.frequency.value = midiToFreq(v); 
   if($pitch.val()!=mainOsc.frequency.value){ 
@@ -142,7 +142,7 @@ function setMPitch(v) {
   console.log(v); 
 }
 $mpitch.knob({ bgColor:"white", min:1, max:127, angleOffset:-140, angleArc:280, "change" : setMPitch });
-setMPitch(60); $mpitch.trigger("change");
+setMPitch(36); $mpitch.trigger("change");
 
 
 function setFilterT(v) { 
@@ -289,10 +289,11 @@ function runSequencers(){
 
   var pSeqVal = (parseInt($("#p"+seqPos).attr("value"),10));
   var fSeqVal = (parseInt($("#f"+seqPos).attr("value"),10));
-  mainOsc.frequency.value = midiToFreq(parseInt($pitch.val(),10) + pSeqVal);
-  mainFilter.frequency.value = parseInt($filterf.val(),10) + fSeqVal;
-  seqPos==8?seqPos=1:seqPos++;
 
+  mainOsc.frequency.value = midiToFreq(constrain(parseInt($mpitch.val(),10) + pSeqVal,1,127));
+  mainFilter.frequency.value = parseInt($filterf.val(),10) + fSeqVal;
+  
+  seqPos==8?seqPos=1:seqPos++;
   setTimeout(runSequencers,seqSpeedInterval);
 }
 
@@ -307,11 +308,9 @@ $sequencerOff.click(function(){
   $sequencerOn.parent().removeClass("active");
   $(this).parent().addClass("active");
   runSeq = false;
-  mainOsc.noteOff(0);    
   mainOsc = context.createOscillator();
   setOscType($wave.val());
   setMPitch($mpitch.val());
-  mainOsc.connect(mainFilter);
 });
 
 randomizeSequencers();

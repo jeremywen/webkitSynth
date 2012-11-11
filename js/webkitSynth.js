@@ -36,7 +36,7 @@ $(function () {
   var $oscOn = $("#oscOn");
   var $oscOff = $("#oscOff");
   var $oscTrigger = $("#oscTrigger");
-  var $oscRepeat = $("#oscRepeat");
+  var $sequencerOn = $("#sequencerOn");
   var runRepeat = false;
   var prevOsc;
   var seqPos=1;
@@ -291,7 +291,7 @@ $(function () {
     triggerOnce();
   });
 
-  $oscRepeat.click(function(){
+  $sequencerOn.click(function(){
     runRepeat = true;
     triggerRepeat();
   });
@@ -309,7 +309,8 @@ $(function () {
     mainOsc.connect(mainFilter);
   });
 
-
+  $sequencerOn.click();
+  
 });//end jquery ready
 
 

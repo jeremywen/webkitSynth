@@ -291,7 +291,7 @@ function triggerRepeat(){
 
   var pSeqVal = (parseInt($("#p"+seqPos).attr("value"),10));
   var fSeqVal = (parseInt($("#f"+seqPos).attr("value"),10));
-  mainOsc.frequency.value =parseInt($pitch.val(),10) + pSeqVal;
+  mainOsc.frequency.value = midiToFreq(parseInt($pitch.val(),10) + pSeqVal);
   mainFilter.frequency.value = parseInt($filterf.val(),10) + fSeqVal;
   seqPos==8?seqPos=1:seqPos++;
 

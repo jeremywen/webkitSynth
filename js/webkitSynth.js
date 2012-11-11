@@ -105,7 +105,7 @@ $(function () {
     console.log(v); 
   }
   $seqspeed.knob({ bgColor:"white", min:0, max:500, cursor:false, angleOffset:-140, angleArc:280, "change" : setSeqSpeed });
-  setSeqSpeed(200); $seqspeed.trigger("change");
+  setSeqSpeed(140); $seqspeed.trigger("change");
 
 
   function setOscType(v) { 
@@ -138,7 +138,7 @@ $(function () {
     console.log(v); 
   }
   $mpitch.knob({ bgColor:"white", min:1, max:127, angleOffset:-140, angleArc:280, "change" : setMPitch });
-  setMPitch(36); $mpitch.trigger("change");
+  setMPitch(60); $mpitch.trigger("change");
 
 
   function setFilterT(v) { 
@@ -310,7 +310,7 @@ $(function () {
   });
 
   $sequencerOn.click();
-  
+
 });//end jquery ready
 
 

@@ -48,7 +48,7 @@ var context = new webkitAudioContext();
 var mainOsc = context.createOscillator();
 var mainFilter = context.createBiquadFilter();
 // mainOsc.connect(mainFilter);
-var gainNode = context.createGainNode();
+var gainNode = context.createGain();
 // mainFilter.connect(gainNode);
 // gainNode.connect(context.destination);
 
@@ -266,7 +266,7 @@ function triggerOnce(){
   filterTrig.gain.value = mainFilter.gain.value;
   oscillatorTrig.connect(filterTrig);
 
-  var gainNodeTrig = context.createGainNode();
+  var gainNodeTrig = context.createGain();
   gainNodeTrig.gain.cancelScheduledValues( currTime );
   gainNodeTrig.gain.setValueAtTime(gainNode.gain.value, currTime);
   filterTrig.connect(gainNodeTrig);

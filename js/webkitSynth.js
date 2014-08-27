@@ -111,8 +111,8 @@ $pitchBars.bars({
   cols:8,
   width:240,
   height:180,
-  min:-(maxMidiPitch/2), 
-  max:(maxMidiPitch/2),
+  min:-24, 
+  max:24,
   change:function(v){
     var barIdx = parseInt(Object.keys(v)[0],10);
     $pitchBars.children().eq(barIdx).attr("value", v[barIdx]);
@@ -138,7 +138,7 @@ $freqBars.bars({
 
 function randomizeSequencers(){
   $pitchBars.find("input").each(function (){
-    $(this).val(Math.floor(Math.random()*maxMidiPitch)-(maxMidiPitch/2));
+    $(this).val(Math.floor(Math.random()*48)-(24));
   }).trigger("change");
 
   $freqBars.find("input").each(function (){
@@ -159,11 +159,12 @@ setSeqSpeed(140); $seqspeed.trigger("change");
 
 
 function setOscType(v) { 
-  $wave.val(mainOsc.type = osc[v]); 
+  $wave.val(v); 
+  mainOsc.type = osc[v]; 
   console.log(v); 
 }
 $wave.knob({ bgColor:"white", min:0, max:3, cursor:true, angleOffset:-140, angleArc:280, "change" : setOscType });
-setOscType(mainOsc.SAWTOOTH); $wave.trigger("change");
+setOscType(1); $wave.trigger("change");
 
 
 function setOscPitch(v) { 
@@ -189,15 +190,16 @@ function setMPitch(v) {
   console.log(v); 
 }
 $mpitch.knob({ bgColor:"white", min:1, max:maxMidiPitch, angleOffset:-140, angleArc:280, "change" : setMPitch });
-setMPitch(36); $mpitch.trigger("change");
+setMPitch(60); $mpitch.trigger("change");
 
 
 function setFilterT(v) { 
-  $filtert.val(mainFilter.type = filters[v]); 
+  $filtert.val(v); 
+  mainFilter.type = filters[v]; 
   console.log(v); 
 }
 $filtert.knob({ bgColor:"white", min:0, max:7, cursor:true, angleOffset:-140, angleArc:280, "change" : setFilterT });
-setFilterT(mainFilter.LOWPASS); $filtert.trigger("change");
+setFilterT(0); $filtert.trigger("change");
 
 
 function setFilterF(v) { 
@@ -206,7 +208,7 @@ function setFilterF(v) {
   console.log("filter f = "+v); 
 }
 $filterf.knob({ bgColor:"white", min:0, max:maxFilterFreq, angleOffset:-140, angleArc:280, "change" : setFilterF });
-setFilterF(2000); $filterf.trigger("change");
+setFilterF(5000); $filterf.trigger("change");
 
 
 function setFilterQ(v) { 
@@ -215,7 +217,7 @@ function setFilterQ(v) {
   console.log(v); 
 }
 $filterq.knob({ bgColor:"white", min:0, max:100, angleOffset:-140, angleArc:280, "change" : setFilterQ });
-setFilterQ(0); $filterq.trigger("change");
+setFilterQ(40); $filterq.trigger("change");
 
 
 function setFilterG(v) { 
@@ -236,16 +238,16 @@ setGain(20); $gain.trigger("change");
 
 
 $ampattack.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
-$ampattack.val(1).trigger("change");
+$ampattack.val(5).trigger("change");
 
 $ampdecay.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
-$ampdecay.val(5).trigger("change");
+$ampdecay.val(15).trigger("change");
 
 $filterattack.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
-$filterattack.val(1).trigger("change");
+$filterattack.val(5).trigger("change");
 
 $filterdecay.knob({ bgColor:"white", min:0, max:50, angleOffset:-140, angleArc:280, "change" : function(){} });
-$filterdecay.val(5).trigger("change");
+$filterdecay.val(15).trigger("change");
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

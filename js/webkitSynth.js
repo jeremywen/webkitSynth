@@ -1,21 +1,20 @@
-/*
-  // Oscillator Types
-  const unsigned short SINE = 0;
-  const unsigned short SQUARE = 1;
-  const unsigned short SAWTOOTH = 2;
-  const unsigned short TRIANGLE = 3;
-  const unsigned short CUSTOM = 4;
-
-  // Filter types
-  const unsigned short LOWPASS = 0;
-  const unsigned short HIGHPASS = 1;
-  const unsigned short BANDPASS = 2;
-  const unsigned short LOWSHELF = 3;
-  const unsigned short HIGHSHELF = 4;
-  const unsigned short PEAKING = 5;
-  const unsigned short NOTCH = 6;
-  const unsigned short ALLPASS = 7;
-*/
+var osc = {
+  0: "sine",
+  1: "square",
+  2: "sawtooth",
+  3: "triangle",
+  4: "custom"
+ }
+var filters = {
+  0: "lowpass",
+  1: "highpass",
+  2: "bandpass",
+  3: "lowshelf",
+  4: "highshelf",
+  5: "peaking",
+  6: "notch",
+  7: "allpass"
+ }
 
 var $pitchBars = $("#pitchBars");
 var $freqBars = $("#freqBars");
@@ -35,11 +34,14 @@ var $filterg = $("#filterg");
 var $sequencerOff = $("#sequencerOff");
 var $sequencerOn = $("#sequencerOn");
 var $rndSeq = $("#rndSeq");
+var $pitchBar = $(".pitchBar")
 var runSeq = false;
 var prevOsc;
-var seqPos=1;
+var seqPos = 0;
 var seqSpeedInterval = 200;
-
+var seqLength = 8;
+var maxFilterFreq = 15000;
+var maxMidiPitch = 127;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //audio setup
@@ -47,21 +49,60 @@ var seqSpeedInterval = 200;
 var context = new webkitAudioContext();
 var mainOsc = context.createOscillator();
 var mainFilter = context.createBiquadFilter();
-// mainOsc.connect(mainFilter);
 var gainNode = context.createGain();
-// mainFilter.connect(gainNode);
-// gainNode.connect(context.destination);
+
+
+function runSequencers(){
+  if(!runSeq){console.log("stop");return;}
+  triggerOnce();
+
+  var pSeqVal = parseInt($pitchBars.children().eq(seqPos).attr("value"), 10);
+  var fSeqVal = parseInt($freqBars.children().eq(seqPos).attr("value"), 10);
+  //console.log("seqPos=%o, pSeqVal=%o, fSeqVal=%o",seqPos,pSeqVal,fSeqVal);
+
+  mainOsc.frequency.value = midiToFreq(constrain(parseInt($mpitch.val(),10) + pSeqVal,1,maxMidiPitch));
+  mainFilter.frequency.value = constrain(parseInt($filterf.val(),10) + fSeqVal,0,maxFilterFreq);
+  
+  (seqPos == (seqLength-1)) ? seqPos=0 : seqPos++;
+  setTimeout(runSequencers,seqSpeedInterval);
+}
+
+
+function triggerOnce(){
+  var currTime = context.currentTime;
+  prevOsc && prevOsc.noteOff(0);
+
+  var oscillatorTrig = prevOsc = context.createOscillator();
+  oscillatorTrig.type = mainOsc.type;
+  oscillatorTrig.frequency.value = mainOsc.frequency.value;
+  
+  var filterTrig = context.createBiquadFilter();
+  filterTrig.type = mainFilter.type;
+  filterTrig.frequency.value = mainFilter.frequency.value;
+  filterTrig.Q.value = mainFilter.Q.value;
+  filterTrig.gain.value = mainFilter.gain.value;
+  oscillatorTrig.connect(filterTrig);
+
+  var gainNodeTrig = context.createGain();
+  gainNodeTrig.gain.cancelScheduledValues( currTime );
+  gainNodeTrig.gain.setValueAtTime(gainNode.gain.value, currTime);
+  filterTrig.connect(gainNodeTrig);
+  gainNodeTrig.connect(context.destination);
+
+  var timeAtAttack = currTime + ($ampattack.val()/100);
+  gainNodeTrig.gain.linearRampToValueAtTime(parseInt($gain.val(),10)/100, timeAtAttack);
+  gainNodeTrig.gain.linearRampToValueAtTime(0, timeAtAttack + ($ampdecay.val()/100));
+  
+  timeAtAttack = currTime + ($filterattack.val()/100);
+  filterTrig.frequency.linearRampToValueAtTime(parseInt($filterf.val(),10), timeAtAttack);
+  filterTrig.frequency.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
+
+  oscillatorTrig.noteOn(0);   
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-//util functions
-///////////////////////////////////////////////////////////////////////////////////////////////
-function midiToFreq(v){ return 440 * Math.pow(2,((v-69)/12)); }
-function freqToMidi(v){ return Math.round(69 + 12*Math.log(v/440)/Math.log(2)); }
-function constrain(amt,low,high) { return (amt < low) ? low : ((amt > high) ? high : amt); }
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-//sequence bars
+// sequencer bars
 ///////////////////////////////////////////////////////////////////////////////////////////////
 $pitchBars.bars({
   fgColor:"skyBlue",
@@ -70,9 +111,12 @@ $pitchBars.bars({
   cols:8,
   width:240,
   height:180,
-  min:-64, 
-  max:64,
-  "change" : function(){}
+  min:-(maxMidiPitch/2), 
+  max:(maxMidiPitch/2),
+  change:function(v){
+    var barIdx = parseInt(Object.keys(v)[0],10);
+    $pitchBars.children().eq(barIdx).attr("value", v[barIdx]);
+  }
 });
 
 
@@ -83,25 +127,28 @@ $freqBars.bars({
   cols:8,
   width:240,
   height:180,
-  min:-8000, 
-  max:8000,
-  "change" : function(){}
+  min:-(maxFilterFreq/2), 
+  max:(maxFilterFreq/2),
+  change:function(v){
+    var barIdx = parseInt(Object.keys(v)[0],10);
+    $freqBars.children().eq(barIdx).attr("value", v[barIdx]);
+  }
 });
 
 
 function randomizeSequencers(){
   $pitchBars.find("input").each(function (){
-    $(this).val(Math.floor(Math.random()*128)-64);
+    $(this).val(Math.floor(Math.random()*maxMidiPitch)-(maxMidiPitch/2));
   }).trigger("change");
 
   $freqBars.find("input").each(function (){
-    $(this).val(Math.floor(Math.random()*16000)-8000);
+    $(this).val(Math.floor(Math.random()*maxFilterFreq)-(maxFilterFreq/2));
   }).trigger("change");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-//knobs
+// knobs
 ///////////////////////////////////////////////////////////////////////////////////////////////
 function setSeqSpeed(v) { 
   $seqspeed.val(seqSpeedInterval=v); 
@@ -112,7 +159,7 @@ setSeqSpeed(140); $seqspeed.trigger("change");
 
 
 function setOscType(v) { 
-  $wave.val(mainOsc.type = v); 
+  $wave.val(mainOsc.type = osc[v]); 
   console.log(v); 
 }
 $wave.knob({ bgColor:"white", min:0, max:3, cursor:true, angleOffset:-140, angleArc:280, "change" : setOscType });
@@ -133,7 +180,7 @@ setOscPitch(500); $pitch.trigger("change");
 
 
 function setMPitch(v) { 
-  v = constrain(v,1,127);
+  v = constrain(v,1,maxMidiPitch);
   $mpitch.val(v); 
   mainOsc.frequency.value = midiToFreq(v); 
   if($pitch.val()!=mainOsc.frequency.value){ 
@@ -141,12 +188,12 @@ function setMPitch(v) {
   } 
   console.log(v); 
 }
-$mpitch.knob({ bgColor:"white", min:1, max:127, angleOffset:-140, angleArc:280, "change" : setMPitch });
+$mpitch.knob({ bgColor:"white", min:1, max:maxMidiPitch, angleOffset:-140, angleArc:280, "change" : setMPitch });
 setMPitch(36); $mpitch.trigger("change");
 
 
 function setFilterT(v) { 
-  $filtert.val(mainFilter.type = v); 
+  $filtert.val(mainFilter.type = filters[v]); 
   console.log(v); 
 }
 $filtert.knob({ bgColor:"white", min:0, max:7, cursor:true, angleOffset:-140, angleArc:280, "change" : setFilterT });
@@ -154,11 +201,11 @@ setFilterT(mainFilter.LOWPASS); $filtert.trigger("change");
 
 
 function setFilterF(v) { 
-  if(v>15000)return;
+  if(v>maxFilterFreq)return;
   $filterf.val(mainFilter.frequency.value = v); 
   console.log("filter f = "+v); 
 }
-$filterf.knob({ bgColor:"white", min:0, max:15000, angleOffset:-140, angleArc:280, "change" : setFilterF });
+$filterf.knob({ bgColor:"white", min:0, max:maxFilterFreq, angleOffset:-140, angleArc:280, "change" : setFilterF });
 setFilterF(2000); $filterf.trigger("change");
 
 
@@ -202,7 +249,7 @@ $filterdecay.val(5).trigger("change");
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-//xy pads
+// xy pads
 ///////////////////////////////////////////////////////////////////////////////////////////////
 $("#filterfq").xy({
     displayInput:false, displayPrevious:false
@@ -212,7 +259,7 @@ $("#filterfq").xy({
   , change : function (value) {
       value.x = (value[0]+100)/200;
       value.y = (value[1]+100)/200;
-      setFilterF(15000*value.x); $filterf.trigger("change");
+      setFilterF(maxFilterFreq*value.x); $filterf.trigger("change");
       setFilterQ(100*value.y); $filterq.trigger("change");
       console.log("change : ", value);
   }
@@ -226,7 +273,7 @@ $("#filterfg").xy({
   , change : function (value) {
       value.x = (value[0]+100)/200;
       value.y = (value[1]+100)/200;
-      setFilterF(15000*value.x); $filterf.trigger("change");
+      setFilterF(maxFilterFreq*value.x); $filterf.trigger("change");
       setFilterG(100*value.y-50); $filterg.trigger("change");
       console.log("change : ", value);
   }
@@ -247,72 +294,37 @@ $("#filterqg").xy({
 }).css({'border':'5px solid #FFF', 'margin':'15px'});
 
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////
-//top buttons
+// top buttons
 ///////////////////////////////////////////////////////////////////////////////////////////////
-function triggerOnce(){
-  var currTime = context.currentTime;
-  prevOsc && prevOsc.noteOff(0);
-
-  var oscillatorTrig = prevOsc = context.createOscillator();
-  oscillatorTrig.type = mainOsc.type;
-  oscillatorTrig.frequency.value = mainOsc.frequency.value;
-  
-  var filterTrig = context.createBiquadFilter();
-  filterTrig.type = mainFilter.type;
-  filterTrig.frequency.value = mainFilter.frequency.value;
-  filterTrig.Q.value = mainFilter.Q.value;
-  filterTrig.gain.value = mainFilter.gain.value;
-  oscillatorTrig.connect(filterTrig);
-
-  var gainNodeTrig = context.createGain();
-  gainNodeTrig.gain.cancelScheduledValues( currTime );
-  gainNodeTrig.gain.setValueAtTime(gainNode.gain.value, currTime);
-  filterTrig.connect(gainNodeTrig);
-  gainNodeTrig.connect(context.destination);
-
-  var timeAtAttack = currTime + ($ampattack.val()/100);
-  gainNodeTrig.gain.linearRampToValueAtTime(parseInt($gain.val(),10)/100, timeAtAttack);
-  gainNodeTrig.gain.linearRampToValueAtTime(0, timeAtAttack + ($ampdecay.val()/100));
-  
-  timeAtAttack = currTime + ($filterattack.val()/100);
-  filterTrig.frequency.linearRampToValueAtTime(parseInt($filterf.val(),10), timeAtAttack);
-  filterTrig.frequency.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
-
-  oscillatorTrig.noteOn(0);   
-}
-
-function runSequencers(){
-  if(!runSeq){console.log("stop");return;}
-  triggerOnce();
-
-  var pSeqVal = (parseInt($("#p"+seqPos).attr("value"),10));
-  var fSeqVal = (parseInt($("#f"+seqPos).attr("value"),10));
-
-  mainOsc.frequency.value = midiToFreq(constrain(parseInt($mpitch.val(),10) + pSeqVal,1,127));
-  mainFilter.frequency.value = parseInt($filterf.val(),10) + fSeqVal;
-  
-  seqPos==8?seqPos=1:seqPos++;
-  setTimeout(runSequencers,seqSpeedInterval);
-}
-
 $sequencerOn.click(function(){
   $(this).parent().addClass("active");
   $sequencerOff.parent().removeClass("active");
   runSeq = true;
   runSequencers();
+  seqPos = 0;
 });
 
 $sequencerOff.click(function(){
   $sequencerOn.parent().removeClass("active");
   $(this).parent().addClass("active");
   runSeq = false;
-  mainOsc = context.createOscillator();
-  setOscType($wave.val());
-  setMPitch($mpitch.val());
+  seqPos = 0;
 });
 
-randomizeSequencers();
 $rndSeq.click(randomizeSequencers)
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// util functions
+///////////////////////////////////////////////////////////////////////////////////////////////
+function midiToFreq(v){ return 440 * Math.pow(2,((v-69)/12)); }
+function freqToMidi(v){ return Math.round(69 + 12*Math.log(v/440)/Math.log(2)); }
+function constrain(amt,low,high) { return (amt < low) ? low : ((amt > high) ? high : amt); }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// init
+///////////////////////////////////////////////////////////////////////////////////////////////
+randomizeSequencers();
 $sequencerOn.click();

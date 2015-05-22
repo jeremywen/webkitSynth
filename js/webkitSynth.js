@@ -97,7 +97,7 @@ function triggerOnce(){
   filterTrig.frequency.linearRampToValueAtTime(parseInt($filterf.val(),10), timeAtAttack);
   filterTrig.frequency.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
 
-  oscillatorTrig.play(0);   
+  oscillatorTrig.start(0);   
 }
 
 

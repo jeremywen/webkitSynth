@@ -46,7 +46,7 @@ var maxMidiPitch = 127;
 ///////////////////////////////////////////////////////////////////////////////////////////////
 //audio setup
 ///////////////////////////////////////////////////////////////////////////////////////////////
-var context = new webkitAudioContext();
+var context = new AudioContext();
 var mainOsc = context.createOscillator();
 var mainFilter = context.createBiquadFilter();
 var gainNode = context.createGain();
@@ -70,7 +70,7 @@ function runSequencers(){
 
 function triggerOnce(){
   var currTime = context.currentTime;
-  prevOsc && prevOsc.noteOff(0);
+  prevOsc && prevOsc.stop(0);
 
   var oscillatorTrig = prevOsc = context.createOscillator();
   oscillatorTrig.type = mainOsc.type;
@@ -97,7 +97,7 @@ function triggerOnce(){
   filterTrig.frequency.linearRampToValueAtTime(parseInt($filterf.val(),10), timeAtAttack);
   filterTrig.frequency.linearRampToValueAtTime(0, timeAtAttack + ($filterdecay.val()/100));
 
-  oscillatorTrig.noteOn(0);   
+  oscillatorTrig.start(0);   
 }
 
 
